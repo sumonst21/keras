@@ -1445,11 +1445,16 @@ class Layer(tf.Module, version_utils.LayerVersionSelector):
             self.add_loss(tf.abs(tf.reduce_mean(inputs)))
             return inputs
         ```
-
-        This method can also be called directly on a Functional Model during
-        construction. In this case, any loss Tensors passed to this Model must
-        be symbolic and be able to be traced back to the model's `Input`s. These
-        losses become part of the model's topology and are tracked in
+        
+        The same code works in distributed training: the input to `add_loss()`
+        is treated like a regularization loss and averaged across replicas
+        by the training loop (both built-in `Model.fit()` and compliant custom
+        training loops).
+      
+        The `add_loss` method can also be called directly on a Functional Model
+        during construction. In this case, any loss Tensors passed to this Model
+        must be symbolic and be able to be traced back to the model's `Input`s.
+        These losses become part of the model's topology and are tracked in
         `get_config`.
 
         Example:

@@ -53,25 +53,14 @@ class Loss:
         return tf.reduce_mean(tf.math.square(y_pred - y_true), axis=-1)
     ```
 
-    When used with `tf.distribute.Strategy`, outside of built-in training loops
-    such as `tf.keras` `compile` and `fit`, please use 'SUM' or 'NONE' reduction
-    types, and reduce losses explicitly in your training loop. Using 'AUTO' or
-    'SUM_OVER_BATCH_SIZE' will raise an error.
-
-    Please see this custom training [tutorial](
-      https://www.tensorflow.org/tutorials/distribute/custom_training) for more
-    details on this.
-
-    You can implement 'SUM_OVER_BATCH_SIZE' using global batch size like:
-
-    ```python
-    with strategy.scope():
-      loss_obj = tf.keras.losses.CategoricalCrossentropy(
-          reduction=tf.keras.losses.Reduction.NONE)
-      ....
-      loss = (tf.reduce_sum(loss_obj(labels, predictions)) *
-              (1. / global_batch_size))
-    ```
+    When using a Loss under a `tf.distribute.Strategy`, except via
+    `Model.compile()` and Keras' built-in `Model.fit()`, please use reduction
+    types 'SUM' or 'NONE', and reduce losses explicitly. Using 'AUTO' or
+    'SUM_OVER_BATCH_SIZE' will raise an error when calling the Loss object
+    from a custom training loop or from user-defined code in `Layer.call()`.
+    Please see this custom training
+    [tutorial](https://www.tensorflow.org/tutorials/distribute/custom_training)
+    for more details on this.
     """
 
     def __init__(self, reduction=losses_utils.ReductionV2.AUTO, name=None):
@@ -204,16 +193,11 @@ class Loss:
             raise ValueError(
                 "Please use `tf.keras.losses.Reduction.SUM` or "
                 "`tf.keras.losses.Reduction.NONE` for loss reduction when "
-                "losses are used with `tf.distribute.Strategy` outside "
-                "of the built-in training loops. You can implement "
-                "`tf.keras.losses.Reduction.SUM_OVER_BATCH_SIZE` using "
-                "global batch size like:\n```\nwith strategy.scope():\n"
-                "    loss_obj = tf.keras.losses.CategoricalCrossentropy("
-                "reduction=tf.keras.losses.Reduction.NONE)\n....\n"
-                "    loss = tf.reduce_sum(loss_obj(labels, predictions)) * "
-                "(1. / global_batch_size)\n```\nPlease see "
-                "https://www.tensorflow.org/tutorials"
-                "/distribute/custom_training"
+                "losses are used with `tf.distribute.Strategy`, "
+                "except for specifying losses in `Model.compile()` "
+                "for use by the built-in training looop `Model.fit()`.\n"
+                "Please see "
+                "https://www.tensorflow.org/tutorials/distribute/custom_training"
                 " for more details."
             )
 
